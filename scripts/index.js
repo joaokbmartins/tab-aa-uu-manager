@@ -42,30 +42,14 @@ for (const tab of tabs) {
     await chrome.windows.update(tab.windowId, { focused: true });
   });
 
-  element.querySelector("#close").addEventListener("click", async () => {
-    const option = confirm(`Are you sure you want to close tab "${title}"?`);
-    if (option) {
-      const event = new CustomEvent("close-tab", { detail: { tabId: tab.id } });
-      await chrome.tabs.remove(tab.id, () => {
-        ul.dispatchEvent(event);
-      });
-    }
-  });
+  element
+    .querySelector("#close")
+    .addEventListener("click", () => closeTabEventListener(tab, title));
 
   elements.add(element);
 } // For
 
-ul.addEventListener("close-tab", ({ detail }) => {
-  const lis = document.querySelectorAll("li");
-  for (const li of lis) {
-    const id = li.querySelector("#tab-id").textContent;
-    console.log(detail, id);
-    if (Number(id) === Number(detail.tabId)) {
-      ul.removeChild(li);
-      break;
-    }
-  }
-});
+ul.addEventListener("close-tab", ({ detail }) => onCloseTabCallback(detail));
 
 ul.addEventListener("ungroup-tab", async ({ detail }) => {
   const lis = document.querySelectorAll("li");
@@ -94,3 +78,23 @@ button.addEventListener("click", async () => {
 chrome.tabGroups.onUpdated.addListener((event) => {
   console.log(event);
 });
+
+async function closeTabEventListener(tab, title) {
+  const option = confirm(`Are you sure you want to close tab "${title}"?`);
+  if (option) {
+    const event = new CustomEvent("close-tab", { detail: { tabId: tab.id } });
+    await chrome.tabs.remove(tab.id, () => ul.dispatchEvent(event));
+  }
+}
+
+function onCloseTabCallback(detail) {
+  const lis = document.querySelectorAll("li");
+  for (const li of lis) {
+    const id = li.querySelector("#tab-id").textContent;
+    console.log(detail, id);
+    if (Number(id) === Number(detail.tabId)) {
+      ul.removeChild(li);
+      break;
+    }
+  }
+}
