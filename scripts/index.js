@@ -26,7 +26,7 @@ for (const tab of tabs) {
   element.querySelector("#group-name").textContent = group?.title;
 
   element.querySelector("#group-info").addEventListener("click", async () => {
-    const option = confirm("Ungroup tab: ", title);
+    const option = confirm(`Ungroup tab "${title}"?`);
     if (option) {
       const event = new CustomEvent("ungroup-tab", {
         detail: { tabId: tab.id },
@@ -42,8 +42,8 @@ for (const tab of tabs) {
     await chrome.windows.update(tab.windowId, { focused: true });
   });
 
-  element.querySelector("#close").addEventListener("click", async (title) => {
-    const option = confirm("Are you sure you want to close tab: ", title);
+  element.querySelector("#close").addEventListener("click", async () => {
+    const option = confirm(`Are you sure you want to close tab "${title}"?`);
     if (option) {
       const event = new CustomEvent("close-tab", { detail: { tabId: tab.id } });
       await chrome.tabs.remove(tab.id, () => {
@@ -53,13 +53,14 @@ for (const tab of tabs) {
   });
 
   elements.add(element);
-}
+} // For
 
-ul.addEventListener("close-tab", (event) => {
+ul.addEventListener("close-tab", ({ detail }) => {
   const lis = document.querySelectorAll("li");
   for (const li of lis) {
-    const id = li.querySelector("span").textContent;
-    if (id === event.detail.tabId) {
+    const id = li.querySelector("#tab-id").textContent;
+    console.log(detail, id);
+    if (Number(id) === Number(detail.tabId)) {
       ul.removeChild(li);
       break;
     }
@@ -69,7 +70,7 @@ ul.addEventListener("close-tab", (event) => {
 ul.addEventListener("ungroup-tab", async ({ detail }) => {
   const lis = document.querySelectorAll("li");
   for (const li of lis) {
-    const id = li.querySelector("span").textContent;
+    const id = li.querySelector("#tab-id").textContent;
     if (id === detail.id) {
       li.querySelctor("#group-name").textContent("");
       break;
@@ -89,3 +90,7 @@ button.addEventListener("click", async () => {
 });
 
 //===================================================================
+
+chrome.tabGroups.onUpdated.addListener((event) => {
+  console.log(event);
+});
